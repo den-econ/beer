@@ -1,0 +1,537 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{enumitem}
+
+\geometry{top=1in, bottom=1in, left=1in, right=1in}
+\onehalfspacing
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+}
+
+\title{\textbf{A Behavioral Equilibrium Exchange Rate (BEER) Model for the Indonesian Rupiah: Disentangling Fundamental, Domestic, and External Drivers}}
+\author{\textbf{Technical Model Documentation}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent This document provides the formal econometric and theoretical documentation for a Behavioral Equilibrium Exchange Rate (BEER) model applied to the Indonesian Rupiah (USD/IDR). Drawing on the foundational framework of \cite{ClarkMacDonald1998}, the model evaluates whether the currency's movements are driven by fundamental economic factors, external sovereign risk sentiments, or domestic currency market noise. Econometrically, the model is implemented via a Vector Error Correction Model (VECM) to capture long-run cointegrating vectors, alongside a Structural Vector Autoregression (SVAR) using a Cholesky identification scheme to compute historical shock decompositions. The results provide a systematic framework for exchange rate assessment and policy analysis in the context of an emerging market economy.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction and Framework Motivation}
+
+Assessing whether an exchange rate is aligned with economic fundamentals or driven by speculative and temporary shocks remains a core challenge in empirical macroeconomics. \cite{ClarkMacDonald1998} formalized the Behavioral Equilibrium Exchange Rate (BEER) approach as an econometrically driven alternative to the Fundamental Equilibrium Exchange Rate (FEER) approach. While the FEER approach relies heavily on subjective definitions of internal and external balance, the BEER methodology utilizes cointegration techniques to establish direct behavioral linkages between the actual real or nominal exchange rate and its macroeconomic determinants.
+
+The BEER approach is based on the idea that the actual real exchange rate can be explained exhaustively in terms of a set of fundamental variables, a set of variables that affect the exchange rate only in the short run, and a random error \citep{ClarkMacDonald1998}. Following \cite{ClarkMacDonald1998}, the reduced-form expression for the real exchange rate can be represented as:
+
+\begin{equation}
+q_t = \beta_1'Z_{1t} + \beta_2'Z_{2t} + \tau'T_t + \epsilon_t
+\label{eq:beer_general}
+\end{equation}
+
+where $Z_1$ represents economic fundamentals expected to have persistent effects over the long run, $Z_2$ represents economic fundamentals affecting the real exchange rate over the medium term, $T$ represents transitory factors affecting the real exchange rate in the short run, and $\epsilon_t$ is a random disturbance term.
+
+The current equilibrium rate, $q_t'$, is defined as the level of the exchange rate given by the current values of the economic fundamentals \citep{ClarkMacDonald1998}:
+
+\begin{equation}
+q_t' = \beta_1'Z_{1t} + \beta_2'Z_{2t}
+\label{eq:current_equilibrium}
+\end{equation}
+
+Current misalignment, $cm_t$, is defined as the difference between the actual real exchange rate and the real exchange rate given by the current values of all economic fundamentals:
+
+\begin{equation}
+cm_t = q_t - q_t' = \tau'T_t + \epsilon_t
+\label{eq:current_misalignment}
+\end{equation}
+
+Total misalignment, $tm_t$, is defined as the difference between the actual real rate and the real rate given by the sustainable or long-run values of the economic fundamentals, $\bar{Z}_{1t}$ and $\bar{Z}_{2t}$:
+
+\begin{equation}
+tm_t = q_t - \beta_1'\bar{Z}_{1t} - \beta_2'\bar{Z}_{2t}
+\label{eq:total_misalignment}
+\end{equation}
+
+Following \cite{ClarkMacDonald1998}, total misalignment can be decomposed into current misalignment and the effect of departures of current fundamentals from their long-run values:
+
+\begin{equation}
+tm_t = \tau'T_t + \epsilon_t + [\beta_1'(Z_{1t} - \bar{Z}_{1t}) + \beta_2'(Z_{2t} - \bar{Z}_{2t})]
+\label{eq:misalignment_decomposition}
+\end{equation}
+
+This framework is particularly well-suited for analyzing the Indonesian Rupiah, a currency that has experienced significant volatility and is influenced by both domestic macroeconomic conditions and external financial market sentiment.
+
+The primary objective of this model is to separate the structural drivers of the currency into three distinct categories:
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+    \item \textbf{Fundamentals}: Core macroeconomic variables that determine long-run sustainability, including the terms of trade, net foreign assets, inflation differentials, and interest rate differentials.
+    \item \textbf{External Risk Sentiment}: Global and sovereign risk factors measured through the 5-year Credit Default Swap (CDS) spread.
+    \item \textbf{Domestic Market Sentiment}: Idiosyncratic shocks and short-term currency innovations captured via the exchange rate residual itself.
+\end{enumerate}
+
+\section{Theoretical Foundation}
+
+\subsection{The Risk-Adjusted Interest Parity Condition}
+
+The starting point of our model follows \cite{ClarkMacDonald1998}, beginning with the familiar risk-adjusted interest parity condition:
+
+\begin{equation}
+E_t[\Delta s_{t+k}] = -(i_t - i_t^*) + \pi_t
+\label{eq:risk_adjusted_interest_parity}
+\end{equation}
+
+where $s_t$ is the foreign currency price of a unit of home currency, $i_t$ denotes a nominal interest rate, $\pi_t = \lambda_t + \kappa$ is the risk premium with a time-varying component $\lambda_t$, and $E_t$ is the conditional expectations operator.
+
+Following \cite{ClarkMacDonald1998}, this can be converted into a real relationship by subtracting the expected inflation differential, yielding:
+
+\begin{equation}
+q_t = E_t[q_{t+k}] + (r_t - r_t^*) - \pi_t
+\label{eq:real_interest_parity}
+\end{equation}
+
+where $r_t = i_t - E_t(\Delta p_{t+k})$ is the ex ante real interest rate. This equation describes the current equilibrium exchange rate as being determined by three components: the expectation of the real exchange rate in period $t+k$, the real interest differential, and the risk premium \citep{ClarkMacDonald1998}.
+
+\subsection{The Time-Varying Risk Premium}
+
+Following \cite{ClarkMacDonald1998}, the time-varying component of the risk premium term is assumed to be a function of the relative supply of domestic to foreign government debt:
+
+\begin{equation}
+\lambda_t = g(gdebt_t / gdebt_t^*)
+\label{eq:risk_premium_function}
+\end{equation}
+
+An increase in the relative supply of outstanding domestic debt relative to foreign debt will increase the domestic risk premium, thereby requiring a depreciation of the current equilibrium real exchange rate \citep{ClarkMacDonald1998}.
+
+\subsection{Long-Run Equilibrium Fundamentals}
+
+The long-run equilibrium exchange rate, $\hat{q}_t$, is assumed to be a function of three fundamental variables \citep{ClarkMacDonald1998}:
+
+\begin{equation}
+\hat{q}_t = f(tot_t, tnt_t, nfa_t)
+\label{eq:long_run_fundamentals}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $tot$ is the terms of trade
+    \item $tnt$ is the Balassa-Samuelson effect (relative price of nontraded to traded goods)
+    \item $nfa$ is net foreign assets
+\end{itemize}
+
+The signs above the right-hand-side variables denote the partial derivatives, indicating the expected direction of influence on the equilibrium exchange rate \citep{ClarkMacDonald1998}.
+
+\section{Model Specification for the Indonesian Rupiah}
+
+\subsection{Variable Definitions and Data Sources}
+
+The model is estimated using monthly time-series data from January 2010 to May 2026. The vector of endogenous variables is denoted as:
+
+\begin{equation}
+Y_t = \begin{bmatrix} tot_t & nfa_t & infl\_diff_t & ir\_diff_t & cds_t & xr_t \end{bmatrix}'
+\label{eq:variable_vector}
+\end{equation}
+
+Each variable is operationalized as follows:
+
+\subsubsection{Exchange Rate ($xr_t$)}
+
+The natural logarithm of the nominal spot exchange rate (USD/IDR). An increase represents a depreciation of the Rupiah. This variable is measured as the monthly average of daily closing rates. \textit{Source}: Bank Indonesia and Bloomberg.
+
+\subsubsection{Inflation Differential ($infl\_diff_t$)}
+
+The core inflation differential between Indonesia and the United States:
+
+\begin{equation}
+infl\_diff_t = Inflation_{IDN,t} - Inflation_{USA,t}
+\label{eq:inflation_differential}
+\end{equation}
+
+Core inflation is used to capture underlying price pressures, excluding volatile food and energy components. \textit{Source}: Bank Indonesia and U.S. Bureau of Labor Statistics.
+
+\subsubsection{Terms of Trade ($tot_t$)}
+
+The terms of trade index, reflecting the relative price of Indonesia's exports to imports. This is defined as:
+
+\begin{equation}
+tot_t = \frac{Export\ Price\ Index_t}{Import\ Price\ Index_t}
+\label{eq:terms_of_trade}
+\end{equation}
+
+\textit{Source}: Bank Indonesia, World Bank, and IMF International Financial Statistics.
+
+\subsubsection{Net Foreign Assets ($nfa_t$)}
+
+The net external asset position of the economy, expressed as a ratio to GDP. This variable captures the stock equilibrium condition in the external sector. \textit{Source}: Bank Indonesia and IMF International Investment Position statistics.
+
+\subsubsection{Interest Rate Differential ($ir\_diff_t$)}
+
+The short-term interest rate differential between Indonesia and the United States:
+
+\begin{equation}
+ir\_diff_t = Interest_{IDN,t} - Interest_{USA,t}
+\label{eq:interest_differential}
+\end{equation}
+
+This variable reflects the monetary policy stance and influences capital flows. \textit{Source}: Bank Indonesia and U.S. Federal Reserve.
+
+\subsubsection{Credit Default Swap Spread ($cds_t$)}
+
+The 5-year Credit Default Swap spread for Indonesian sovereign bonds, serving as a proxy for external risk premium and international capital sentiment. This variable captures sovereign risk perceptions and global risk appetite. \textit{Source}: Bloomberg.
+
+\subsection{Theoretical Justification of the Variables}
+
+The choice of variables follows the theoretical framework established in \cite{ClarkMacDonald1998} and subsequent BEER literature. The inclusion of the terms of trade and the Balassa-Samuelson effect (proxied by the inflation differential) captures the supply-side determinants of the real exchange rate \citep{ClarkMacDonald1998}. Net foreign assets captures the stock equilibrium condition and the external sustainability of the currency \citep{ClarkMacDonald1998, Faruque1995}.
+
+The interest rate differential reflects the monetary policy stance and its influence on short-term capital flows \citep{ClarkMacDonald1998}. The inclusion of the CDS spread is motivated by the importance of sovereign risk perceptions for emerging market currencies \citep{Edwards1989, Elbadawi1994}. This follows the empirical implementation of BEERs for developing countries, where external risk factors are critical determinants of exchange rate behavior \citep{Edwards1989, Elbadawi1994}.
+
+\section{Econometric Methodology}
+
+\subsection{Lag Selection and Cointegration Analysis}
+
+The baseline model is derived from an unrestricted Vector Autoregressive (VAR) model of order $p$. Let $Y_t$ be a $K \times 1$ vector of endogenous variables ($K=6$). The $p$-lag VAR process with a constant vector is expressed as:
+
+\begin{equation}
+Y_t = \mu + \sum_{i=1}^{p} A_i Y_{t-i} + u_t
+\label{eq:var_general}
+\end{equation}
+
+where $\mu$ is a $K \times 1$ vector of intercepts, $A_i$ are $K \times K$ coefficient matrices, and $u_t \sim i.i.d. N(0, \Sigma_u)$.
+
+The optimal lag structure is determined by selecting $p=2$ based on standard information criteria (Akaike Information Criterion and Schwarz Bayesian Criterion). This follows the standard practice in the BEER literature of using a relatively small number of lags for annual or monthly data \citep{ClarkMacDonald1998, MacDonald1995}.
+
+Following \cite{Johansen1991, Johansen1995}, if the elements of $Y_t$ are integrated of order one ($I(1)$), the system can be reparameterized into a Vector Error Correction Model (VECM):
+
+\begin{equation}
+\Delta Y_t = \mu + \Pi Y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta Y_{t-i} + u_t
+\label{eq:vecm_general}
+\end{equation}
+
+where $\Pi = \sum_{i=1}^{p} A_i - I_K$ and $\Gamma_i = -\sum_{j=i+1}^{p} A_j$. The matrix $\Pi$ captures the long-run relationships. Under a cointegration rank $r = 2$, $\Pi$ is factored as:
+
+\begin{equation}
+\Pi = \alpha \beta'
+\label{eq:pi_factorization}
+\end{equation}
+
+where $\beta$ is a $K \times r$ matrix containing the long-run structural anchor vectors, and $\alpha$ is a $K \times r$ matrix representing the error correction adjustment speeds \citep{Johansen1995}.
+
+The Johansen trace test is used to determine the cointegration rank:
+
+\begin{equation}
+TR = T\sum_{i=r+1}^{N} \ln(1 - \lambda_i)
+\label{eq:trace_test}
+\end{equation}
+
+where $\lambda_{r+1}, \dots, \lambda_N$ are the $N-r$ smallest squared canonical correlations between $x_{t-k}$ and $\Delta x_t$ series \citep{Johansen1995, ClarkMacDonald1998}.
+
+\subsection{Cointegration Restrictions and Identification}
+
+Following \cite{ClarkMacDonald1998}, we impose identifying restrictions on the cointegrating space to facilitate economic interpretation. The long-run equilibrium relationship for the exchange rate is specified as:
+
+\begin{equation}
+lq_t = \beta_1 ltot_t + \beta_2 ltnt_t + \beta_3 nfa_t + \beta_4 \lambda_t + \beta_0
+\label{eq:cointegrating_vector1}
+\end{equation}
+
+where $ltnt$ is proxied by the inflation differential. The second cointegrating vector captures the short-run effect of the interest rate differential:
+
+\begin{equation}
+r_t - r_t^* = \gamma_0
+\label{eq:cointegrating_vector2}
+\end{equation}
+
+This identification scheme follows \cite{ClarkMacDonald1998}, who argued for a meaningful interpretation of multiple cointegrating vectors: one that embodies long-run determinants of the exchange rate and another that captures the short-run effect of interest rate differentials.
+
+\subsection{Extraction of the BEER Fair Value}
+
+The VECM parameters are estimated using Maximum Likelihood (ML). The fundamental fair value of the currency is computed by isolating the long-term structural equilibrium from short-term error adjustments and transitory lag innovations. Let $xr_t$ be the actual log exchange rate. The log fair value $\widehat{xr}_t$ is extracted by subtracting the empirical VECM residuals from the observed series:
+
+\begin{equation}
+\widehat{xr}_t = xr_t - \hat{u}_{xr, t}
+\label{eq:fair_value_log}
+\end{equation}
+
+where $\hat{u}_{xr, t}$ is the residual from the VECM equation for the exchange rate \citep{ClarkMacDonald1998}.
+
+To transform the modeled series back to the absolute currency level (Rupiah per USD), the exponential function is applied to the time series:
+
+\begin{align}
+\text{Actual IDR}_t &= \exp(xr_t) \label{eq:actual_level} \\
+\text{BEER Fair Value}_t &= \exp(\widehat{xr}_t) \label{eq:fair_value_level}
+\end{align}
+
+This transformation ensures that the fair value is expressed in the same units as the actual exchange rate, facilitating economic interpretation and policy analysis.
+
+\subsection{Diagnostic Testing}
+
+Following \cite{ClarkMacDonald1998}, we conduct a battery of diagnostic tests to ensure the adequacy of the estimated model. These include:
+
+\subsubsection{Multivariate Stationarity Tests}
+
+Following \cite{Johansen1995}, the null hypothesis of stationarity against the alternative of non-stationarity is tested, subject to the chosen cointegration rank.
+
+\subsubsection{Residual Diagnostics}
+
+Multivariate tests for serial correlation (Ljung-Box and LM tests) and normality (Doornik-Hansen test) are conducted. These tests ensure that the estimated residuals are white noise, which is consistent with the interpretation of measured misalignment as reflecting transitory and random factors \citep{ClarkMacDonald1998}.
+
+\subsubsection{Alpha Adjustment Matrix}
+
+The $\alpha$ matrix is interpreted as the adjustment matrix, indicating the speed with which the system responds to last period's deviation from the equilibrium level of the exchange rate \citep{Johansen1995, ClarkMacDonald1998}.
+
+\section{Structural VAR and Shock Identification}
+
+\subsection{The SVAR Framework}
+
+To disentangle the dynamic impacts of global, domestic, and fundamental components, the VAR model is restricted using a structural framework. The structural relationship between reduced-form innovations $u_t$ and orthogonal structural shocks $\varepsilon_t$ is defined via the contemporary matrix $B_0$:
+
+\begin{equation}
+B_0 u_t = \varepsilon_t \quad \implies \quad u_t = B_0^{-1} \varepsilon_t
+\label{eq:svar_relationship}
+\end{equation}
+
+where $E[\varepsilon_t \varepsilon_t'] = I_K$. This implies that the variance-covariance matrix satisfies:
+
+\begin{equation}
+\Sigma_u = B_0^{-1} (B_0^{-1})'
+\label{eq:sigma_relationship}
+\end{equation}
+
+Following \cite{Sims1980}, identification is achieved using a lower-triangular Cholesky decomposition of $\Sigma_u$, such that $B_0^{-1}$ is uniquely obtained via the lower Cholesky factor:
+
+\begin{equation}
+B_0^{-1} = \text{chol}(\Sigma_u)'
+\label{eq:cholesky}
+\end{equation}
+
+\subsection{Causal Ordering and Structural Assumptions}
+
+The structural identification relies on a recursive exclusion restriction scheme. Variables ordered earlier are assumed to exert an immediate, contemporaneous effect on subsequent variables but react to subsequent variables only with a lag. The variables are ordered as follows:
+
+\begin{equation}
+\text{Ordering: } tot_t \longrightarrow nfa_t \longrightarrow infl\_diff_t \longrightarrow ir\_diff_t \longrightarrow cds_t \longrightarrow xr_t
+\label{eq:ordering}
+\end{equation}
+
+The underlying structural assumptions justifying this sequence are:
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+    \item \textbf{Terms of Trade ($tot$)}: Determined primarily by global commodity prices, rendering it completely exogenous to domestic Indonesian macroeconomic fluctuations in the short run. This follows the standard assumption in the BEER literature for commodity-exporting countries \citep{Edwards1989, Elbadawi1994}.
+    
+    \item \textbf{Net Foreign Assets ($nfa$)}: Responds contemporaneously to trade balance shifts ($tot$), but capital position changes take time to influence domestic price indices. This is consistent with the stock-flow equilibrium approach to exchange rate modeling \citep{Faruque1995, ClarkMacDonald1998}.
+    
+    \item \textbf{Inflation Differential ($infl\_diff$)}: Reacts directly to real trade and external balance flows, but central bank policy rates adjust with a minor lag. The inflation differential captures the Balassa-Samuelson effect, which relates to the relative price of nontraded to traded goods \citep{ClarkMacDonald1998}.
+    
+    \item \textbf{Interest Rate Differential ($ir\_diff$)}: Represents the monetary policy stance, reacting instantly to domestic inflation pressures and external shocks. This follows the monetary policy reaction function literature \citep{Taylor1993}.
+    
+    \item \textbf{Credit Default Swap ($cds$)}: Captures sovereign premium adjustments influenced by domestic macro stability indicators ($tot, nfa, infl, ir$), acting as a fast-moving gauge of external financial risk sentiment. This is consistent with the literature on sovereign risk and exchange rates \citep{Edwards1989}.
+    
+    \item \textbf{Exchange Rate ($xr$)}: Being a highly liquid asset market price, it adjusts instantaneously to every structural innovation in the system, absorbing all prior structural fundamentals and sentiment shocks. This reflects the efficient markets hypothesis for exchange rates \citep{ClarkMacDonald1998}.
+\end{enumerate}
+
+\subsection{Historical Decomposition}
+
+To analyze how specific categories of shocks shaped the sample history, the structural innovations are propagated through the Vector Moving Average (VMA) representation:
+
+\begin{equation}
+Y_t = \sum_{s=0}^{\infty} \Phi_s \mu + \sum_{s=0}^{\infty} \Theta_s \varepsilon_{t-s}
+\label{eq:vma_representation}
+\end{equation}
+
+where the moving average matrices $\Phi_s$ are updated recursively via:
+
+\begin{equation}
+\Phi_s = \sum_{i=1}^{p} \Phi_{s-i} A_i
+\label{eq:phi_recursion}
+\end{equation}
+
+with $\Phi_0 = I_K$, and the structural impulse response matrices are given by:
+
+\begin{equation}
+\Theta_s = \Phi_s B_0^{-1}
+\label{eq:theta_definition}
+\end{equation}
+
+The historical contribution of a specific shock $j$ to variable $i$ at time $t$ is calculated as:
+
+\begin{equation}
+H_{i,j,t} = \sum_{s=0}^{t-1} \theta_{ij, s} \varepsilon_{j, t-s}
+\label{eq:historical_contribution}
+\end{equation}
+
+This decomposition allows us to attribute movements in the exchange rate to specific structural shocks, distinguishing between fundamental factors, external risk sentiment, and domestic currency market sentiment.
+
+\section{Structural Classification for Policy Analysis}
+
+Following the mathematical computation of the historical shock matrices, individual variable contributions are aggregated into three clear, structural dimensions to identify whether the Rupiah is driven by core macroeconomic fundamentals, country-risk considerations, or short-term noise:
+
+\begin{align}
+\text{Fundamentals}_t &= H_{xr,tot,t} + H_{xr,nfa,t} + H_{xr,infl\_diff,t} + H_{xr,ir\_diff,t} \label{eq:fundamentals} \\
+\text{External Sentiment}_t &= H_{xr,cds,t} \label{eq:external_sentiment} \\
+\text{Domestic Sentiment}_t &= H_{xr,xr,t} \label{eq:domestic_sentiment}
+\end{align}
+
+Because an increase in $xr$ means a depreciation of the Rupiah against the USD, a positive structural contribution in any category signifies that the specific shock cluster is exerting depreciation pressure on the currency, while negative values reflect appreciation drivers.
+
+This classification scheme follows the policy-oriented interpretation of BEERs developed by \cite{ClarkMacDonald1998}, who emphasized the importance of distinguishing between misalignment arising from transitory factors, random disturbances, and departures of economic fundamentals from their sustainable values.
+
+\section{Interpretation and Policy Implications}
+
+\subsection{The BEER Framework for Exchange Rate Assessment}
+
+The BEER approach provides a systematic way to assess whether a country's exchange rate is consistent with economic fundamentals \citep{ClarkMacDonald1998}. The estimated BEER can be interpreted as the level of the exchange rate that is consistent with the current values of the economic fundamentals. A departure of the actual exchange rate from the BEER suggests misalignment, which may be unsustainable in the long run \citep{ClarkMacDonald1998}.
+
+As noted by \cite{ClarkMacDonald1998}: 
+
+\begin{quote}
+"The methodology of the BEER... implies that a departure of the actual real exchange rate from the estimated BEER will not be sustainable, as the cointegrating vector of variables operates as an attractor that eventually brings the actual exchange rate back into line with the value consistent with the fundamentals."
+\end{quote}
+
+\subsection{Policy Relevance}
+
+The model has several important policy applications:
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+    \item \textbf{Exchange Rate Surveillance}: The BEER provides a benchmark for assessing whether the Rupiah is overvalued or undervalued relative to fundamentals, supporting the conduct of exchange rate policy.
+    
+    \item \textbf{Identification of External Shocks}: The historical decomposition distinguishes between shocks originating from global commodity prices, sovereign risk perceptions, and domestic factors, helping policymakers understand the drivers of exchange rate movements.
+    
+    \item \textbf{Capital Flow Management}: The separate identification of external sentiment (proxied by the CDS spread) allows policymakers to assess the impact of global financial conditions on the Rupiah and design appropriate policy responses.
+    
+    \item \textbf{Monetary Policy Transmission}: The interest rate differential variable captures the monetary policy transmission mechanism to the exchange rate, providing insights into the effectiveness of monetary policy in stabilizing the currency.
+\end{enumerate}
+
+\subsection{Limitations and Future Research}
+
+While the BEER approach offers significant advantages for exchange rate assessment, several limitations should be acknowledged \citep{ClarkMacDonald1998}:
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+    \item \textbf{Model Specification}: The BEER approach does not directly incorporate considerations of internal and external balance, which are central to the FEER approach. Future research could calibrate the fundamentals at values corresponding to full employment and sustainable current account positions.
+    
+    \item \textbf{Identification of Fundamentals}: The distinction between transitory and permanent components of the fundamentals requires judgment, and the use of smoothing procedures such as the Hodrick-Prescott filter is mechanical and may not correspond to economic notions of sustainable levels.
+    
+    \item \textbf{Emerging Market Specificities}: While the model incorporates sovereign risk through the CDS spread, other factors specific to emerging markets (such as financial dollarization, capital account restrictions, and institutional quality) could be incorporated in future extensions.
+    
+    \item \textbf{Forecasting Performance}: Future research could evaluate the out-of-sample forecasting performance of the model, following the approach of \cite{MacDonald1997a} and \cite{MacDonaldMarsh1997}, who demonstrated that BEER-type models have good forecasting properties relative to a martingale process.
+\end{enumerate}
+
+\newpage
+
+\section{Appendix: Mathematical Derivations and Code Implementation}
+
+\subsection{Johansen Cointegration Framework}
+
+The Johansen procedure for cointegration analysis involves the following steps:
+
+\textbf{Step 1:} Specify the VAR model of order $p$:
+
+\begin{equation}
+Y_t = \mu + \sum_{i=1}^{p} A_i Y_{t-i} + u_t
+\end{equation}
+
+\textbf{Step 2:} Reparameterize into VECM form:
+
+\begin{equation}
+\Delta Y_t = \mu + \Pi Y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta Y_{t-i} + u_t
+\end{equation}
+
+\textbf{Step 3:} Compute the likelihood ratio test for the rank of $\Pi$:
+
+\begin{equation}
+TR = T\sum_{i=r+1}^{N} \ln(1 - \lambda_i)
+\end{equation}
+
+\textbf{Step 4:} Impose identifying restrictions on $\beta$ and $\alpha$ matrices.
+
+\subsection{SVAR Identification}
+
+The Cholesky decomposition follows these steps:
+
+\textbf{Step 1:} Estimate the reduced-form VAR and obtain $\Sigma_u$.
+
+\textbf{Step 2:} Compute the Cholesky decomposition:
+
+\begin{equation}
+\Sigma_u = PP'
+\end{equation}
+
+where $P$ is lower triangular.
+
+\textbf{Step 3:} Set $B_0^{-1} = P$ and $B_0 = P^{-1}$.
+
+\textbf{Step 4:} Compute structural innovations:
+
+\begin{equation}
+\varepsilon_t = B_0 u_t = P^{-1} u_t
+\end{equation}
+
+\subsection{Historical Decomposition}
+
+The historical decomposition algorithm proceeds as follows:
+
+\textbf{Step 1:} Compute the moving average coefficient matrices:
+
+\begin{equation}
+\Phi_s = \sum_{i=1}^{p} \Phi_{s-i} A_i, \quad \Phi_0 = I_K
+\end{equation}
+
+\textbf{Step 2:} Compute structural impulse responses:
+
+\begin{equation}
+\Theta_s = \Phi_s B_0^{-1}
+\end{equation}
+
+\textbf{Step 3:} For each time $t$ and shock $j$:
+
+\begin{equation}
+H_{i,j,t} = \sum_{s=0}^{t-1} \theta_{ij,s} \varepsilon_{j,t-s}
+\end{equation}
+
+\subsection{Variable Definitions Summary}
+
+\begin{table}[H]
+\centering
+\caption{Variable Definitions and Data Sources}
+\label{tab:variables}
+\begin{tabular}{p{0.2\textwidth} p{0.4\textwidth} p{0.35\textwidth}}
+\toprule
+\textbf{Variable} & \textbf{Definition} & \textbf{Source} \\
+\midrule
+$xr_t$ & Natural log of USD/IDR nominal exchange rate & Bank Indonesia, Bloomberg \\
+$infl\_diff_t$ & Core inflation differential (Indonesia - USA) & Bank Indonesia, BLS \\
+$tot_t$ & Terms of trade (export/import price ratio) & Bank Indonesia, World Bank, IMF IFS \\
+$nfa_t$ & Net foreign assets / GDP & Bank Indonesia, IMF IIP \\
+$ir\_diff_t$ & Short-term interest rate differential & Bank Indonesia, U.S. Federal Reserve \\
+$cds_t$ & 5-year sovereign CDS spread & Bloomberg \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\bibliographystyle{apalike}
+\bibliography{references}
+
+\end{document}
