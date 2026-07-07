@@ -540,3 +540,5 @@ $$
 # Reproducibility Statement {.unnumbered}
 
 The model replication package is hosted in the [DEN public GitHub repository](https://www.github.com/den-econ/beer/).
+
+# References {.unnumbered}
