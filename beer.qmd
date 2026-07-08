@@ -12,7 +12,7 @@ published: "7 July 2026"
 # Authors
 author:
   - name: "Alfan Mansur"
-    orcid: "0000-0001-8695-0514"
+    orcid: "0000-0002-6446-5849"
     affiliations:
       - name: "Dewan Ekonomi Nasional"
     email: alfanmansur@dewanekonomi.go.id
