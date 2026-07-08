@@ -17,6 +17,12 @@ author:
       - name: "Dewan Ekonomi Nasional"
     email: alfanmansur@dewanekonomi.go.id
     corresponding: true
+  - name: "Krisna Gupta"
+    orcid: "0000-0001-8695-0514"
+    affiliations:
+      - name: "Dewan Ekonomi Nasional"
+    email: krisna@dewanekonomi.go.id
+    corresponding: false
 
 # Keywords (maximum five)
 keywords:
