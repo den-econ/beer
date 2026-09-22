@@ -62,6 +62,8 @@ citation: true
 
 # Introduction
 
+<!-- Kondisi Rupiah sepanjang 2026 sebagai motivasi studi BEER ini -->
+
 Assessing whether an exchange rate is aligned with economic fundamentals or driven by speculative and temporary shocks remains a core challenge in empirical macroeconomics. @ClarkMacDonald1998 formalized the Behavioral Equilibrium Exchange Rate (BEER) approach as an econometrically driven alternative to the Fundamental Equilibrium Exchange Rate (FEER) approach. While the FEER approach relies heavily on subjective definitions of internal and external balance, the BEER methodology utilizes cointegration techniques to establish direct behavioral linkages between the actual real or nominal exchange rate and its macroeconomic determinants.
 
 The BEER approach is based on the idea that the actual real exchange rate can be explained exhaustively in terms of a set of fundamental variables, a set of variables that affect the exchange rate only in the short run, and a random error [@ClarkMacDonald1998]. Following @ClarkMacDonald1998, the reduced-form expression for the real exchange rate can be represented as:
