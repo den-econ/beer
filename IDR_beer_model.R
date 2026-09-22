@@ -1,11 +1,12 @@
 # Ensure required packages are loaded
-# install.packages(c("readxl", "urca", "tsDyn", "vars", "tidyverse"))
+# install.packages(c("readxl", "urca", "tsDyn", "vars", "tidyverse","ggden"))
 
 library(readxl)
 library(urca)
 library(tsDyn)
 library(vars)
 library(tidyverse)
+library(ggden)
 
 # ===================================================
 # 1. LOAD AND PREPARE DATA
@@ -86,20 +87,19 @@ p_fair_value <- ggplot(plot_df_filtered, aes(x = Time)) +
             size = 1.2) +
 
   # Mark and label the last observation of each line
-  geom_point(data = last_obs, aes(y = Actual), color = "orange", size = 2.5) +
-  geom_point(data = last_obs, aes(y = FairValue), color = "orange4", size = 2.5) +
+  geom_point(data = last_obs, aes(y = Actual), color = den_color(1), size = 2.5) +
+  geom_point(data = last_obs, aes(y = FairValue), color = den_color(2), size = 2.5) +
   geom_text(data = last_obs,
             aes(y = Actual, label = scales::comma(Actual, accuracy = 1)),
-            color = "orange", hjust = -0.25, fontface = "bold", size = 3.5,
+            color = den_color(1), hjust = -0.25, fontface = "bold", size = 3.5,
             show.legend = FALSE) +
   geom_text(data = last_obs,
             aes(y = FairValue, label = scales::comma(FairValue, accuracy = 1)),
-            color = "orange4", hjust = -0.25, fontface = "bold", size = 3.5,
+            color = den_color(2), hjust = -0.25, fontface = "bold", size = 3.5,
             show.legend = FALSE) +
 
-  # Keeping your exact requested color scheme unchanged
-  scale_color_manual(values = c("Actual USD/IDR Spot" = "orange", 
-                                "BEER Model Fair Value" = "orange4")) +
+  # DEN palette: gold (Actual), dark brown (Fair Value)
+  scale_color_den() +
   
   # Dynamic Axis Breaks to make the shortened timeline scannable
   scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
@@ -111,16 +111,14 @@ p_fair_value <- ggplot(plot_df_filtered, aes(x = Time)) +
   labs(title = "USD/IDR Behavioral Equilibrium Model (2022-2026)",
        subtitle = "Components: Core Inflation Differential, Terms of Trade, NFA, IR Differential, CDS 5Y",
        y = "Rupiah per USD", x = "Timeline", color = "Model Component") +
-  theme_minimal() +
+  theme_den(legend_position = "bottom") +
   theme(
-    legend.position = "bottom",
     axis.text.x = element_text(angle = 45, hjust = 1), # Rotates date labels slightly for clarity
-    panel.grid.minor = element_blank(),                 # Removes minor grid lines for a cleaner look
-    plot.margin = margin(5.5, 55, 5.5, 5.5)             # Right margin holds the end-point labels
+    plot.margin = margin(6, 55, 6, 6)                   # Right margin holds the end-point labels
   )
 
 print(p_fair_value)
-ggsave("fig/fair_value_2022_2026.png", p_fair_value, width = 9, height = 5.5, dpi = 300)
+den_save("fig/fair_value_2022_2026.png", p_fair_value, width = 9, height = 5.5)
 
 # ===================================================
 # 6. TRANSITION TO VAR/SVAR: FROZEN MARCH 2026 COEFFICIENTS
@@ -238,9 +236,9 @@ hd_long$Date <- as.Date(hd_long$Date)
 p_hd_full <- ggplot(hd_long, aes(x = Date, y = Contribution, fill = Shock_Type)) +
   geom_col(position = "stack") +
   scale_fill_manual(values = c(
-    "Fundamentals"       = "orange",   
-    "External_Sentiment" = "orange4",  
-    "Domestic_Sentiment" = "red"       
+    "Fundamentals"       = den_color(1),  # gold
+    "External_Sentiment" = den_color(2),  # dark brown
+    "Domestic_Sentiment" = den_color(3)   # red
   )) +
   scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
   labs(
@@ -248,11 +246,11 @@ p_hd_full <- ggplot(hd_long, aes(x = Date, y = Contribution, fill = Shock_Type))
     subtitle = "Disentangling structural drivers from external and domestic market sentiments",
     x = "Timeline", y = "Structural Shock Contribution", fill = "Shock Category"
   ) +
-  theme_minimal() +
-  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
+  theme_den(legend_position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 print(p_hd_full)
-ggsave("fig/hd_full_sample.png", p_hd_full, width = 9, height = 5.5, dpi = 300)
+den_save("fig/hd_full_sample.png", p_hd_full, width = 9, height = 5.5)
 
 # ===================================================
 # 9. VISUALIZATION OF HISTORICAL DECOMPOSITION (LAST 12 MONTHS)
@@ -264,9 +262,9 @@ hd_last_12m <- hd_long %>%
 p_hd_12m <- ggplot(hd_last_12m, aes(x = Date, y = Contribution, fill = Shock_Type)) +
   geom_col(position = "stack") +
   scale_fill_manual(values = c(
-    "Fundamentals"       = "orange",   
-    "External_Sentiment" = "orange4",  
-    "Domestic_Sentiment" = "red"       
+    "Fundamentals"       = den_color(1),  # gold
+    "External_Sentiment" = den_color(2),  # dark brown
+    "Domestic_Sentiment" = den_color(3)   # red
   )) +
   
   scale_x_date(
@@ -281,13 +279,9 @@ p_hd_12m <- ggplot(hd_last_12m, aes(x = Date, y = Contribution, fill = Shock_Typ
     subtitle = "Recent 12-Month Horizon (Juli 2025 - Juni 2026)",
     x = "Timeline", y = "Structural Shock Contribution", fill = "Shock Category"
   ) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.minor = element_blank()
-  )
+  theme_den(legend_position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 print(p_hd_12m)
-ggsave("fig/hd_last_12m.png", p_hd_12m, width = 9, height = 5.5, dpi = 300)
+den_save("fig/hd_last_12m.png", p_hd_12m, width = 9, height = 5.5)
 
