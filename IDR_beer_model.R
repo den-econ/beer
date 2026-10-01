@@ -1,12 +1,11 @@
 # Ensure required packages are loaded
-# install.packages(c("readxl", "urca", "tsDyn", "vars", "tidyverse","ggden"))
+# install.packages(c("readxl", "urca", "tsDyn", "vars", "tidyverse"))
 
 library(readxl)
 library(urca)
 library(tsDyn)
 library(vars)
 library(tidyverse)
-library(ggden)
 
 # ===================================================
 # 1. LOAD AND PREPARE DATA
@@ -68,57 +67,36 @@ openxlsx::write.xlsx(export_df, "simple_idr_beer_model.xlsx", rowNames = FALSE)
 # ===================================================
 # 5. DIAGNOSTIC INTERPRETATION & VISUALIZATION (2022-2026)
 # ===================================================
-if (!dir.exists("fig")) dir.create("fig")
 
 # Filter the data frame to strictly capture the 2022 to 2026 window
-plot_df_filtered <- plot_df %>%
+plot_df_filtered <- plot_df %>% 
   filter(Time >= as.Date("2022-01-01") & Time <= as.Date("2026-12-31"))
 
-# Last observation, used to annotate the end-point value of each line
-last_obs <- plot_df_filtered %>%
-  filter(Time == max(Time))
-
-p_fair_value <- ggplot(plot_df_filtered, aes(x = Time)) +
+ggplot(plot_df_filtered, aes(x = Time)) +
   # Actual Spot Line (Solid)
   geom_line(aes(y = Actual, color = "Actual USD/IDR Spot"), size = 1.2) +
   
   # Fair Value Line (Swapped from dashed to solid as requested)
-  geom_line(aes(y = FairValue, color = "BEER Model Fair Value"),
+  geom_line(aes(y = FairValue, color = "BEER Model Fair Value"), 
             size = 1.2) +
-
-  # Mark and label the last observation of each line
-  geom_point(data = last_obs, aes(y = Actual), color = den_color(1), size = 2.5) +
-  geom_point(data = last_obs, aes(y = FairValue), color = den_color(2), size = 2.5) +
-  geom_text(data = last_obs,
-            aes(y = Actual, label = scales::comma(Actual, accuracy = 1)),
-            color = den_color(1), hjust = -0.25, fontface = "bold", size = 3.5,
-            show.legend = FALSE) +
-  geom_text(data = last_obs,
-            aes(y = FairValue, label = scales::comma(FairValue, accuracy = 1)),
-            color = den_color(2), hjust = -0.25, fontface = "bold", size = 3.5,
-            show.legend = FALSE) +
-
-  # DEN palette: gold (Actual), dark brown (Fair Value)
-  scale_color_den() +
+  
+  # Keeping your exact requested color scheme unchanged
+  scale_color_manual(values = c("Actual USD/IDR Spot" = "orange", 
+                                "BEER Model Fair Value" = "orange4")) +
   
   # Dynamic Axis Breaks to make the shortened timeline scannable
   scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
-  # Extra headroom at the top so the end-point label is not clipped
-  scale_y_continuous(labels = scales::comma,
-                     expand = expansion(mult = c(0.05, 0.08))) +
-  coord_cartesian(clip = "off") +
+  scale_y_continuous(labels = scales::comma) + 
   
   labs(title = "USD/IDR Behavioral Equilibrium Model (2022-2026)",
        subtitle = "Components: Core Inflation Differential, Terms of Trade, NFA, IR Differential, CDS 5Y",
        y = "Rupiah per USD", x = "Timeline", color = "Model Component") +
-  theme_den(legend_position = "bottom") +
+  theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1), # Rotates date labels slightly for clarity
-    plot.margin = margin(6, 55, 6, 6)                   # Right margin holds the end-point labels
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 90, hjust = 1), # Rotates date labels slightly for clarity
+    panel.grid.minor = element_blank()                  # Removes minor grid lines for a cleaner look
   )
-
-print(p_fair_value)
-den_save("fig/fair_value_2022_2026.png", p_fair_value, width = 9, height = 5.5)
 
 # ===================================================
 # 6. TRANSITION TO VAR/SVAR: FROZEN MARCH 2026 COEFFICIENTS
@@ -233,12 +211,12 @@ hd_long <- hd_df %>%
 # ===================================================
 hd_long$Date <- as.Date(hd_long$Date)
 
-p_hd_full <- ggplot(hd_long, aes(x = Date, y = Contribution, fill = Shock_Type)) +
+ggplot(hd_long, aes(x = Date, y = Contribution, fill = Shock_Type)) +
   geom_col(position = "stack") +
   scale_fill_manual(values = c(
-    "Fundamentals"       = den_color(1),  # gold
-    "External_Sentiment" = den_color(2),  # dark brown
-    "Domestic_Sentiment" = den_color(3)   # red
+    "Fundamentals"       = "orange",   
+    "External_Sentiment" = "orange4",  
+    "Domestic_Sentiment" = "red"       
   )) +
   scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
   labs(
@@ -246,42 +224,40 @@ p_hd_full <- ggplot(hd_long, aes(x = Date, y = Contribution, fill = Shock_Type))
     subtitle = "Disentangling structural drivers from external and domestic market sentiments",
     x = "Timeline", y = "Structural Shock Contribution", fill = "Shock Category"
   ) +
-  theme_den(legend_position = "bottom") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-print(p_hd_full)
-den_save("fig/hd_full_sample.png", p_hd_full, width = 9, height = 5.5)
+  theme_minimal() +
+  theme(legend.position = "bottom", axis.text.x = element_text(angle = 90, hjust = 1))
 
 # ===================================================
 # 9. VISUALIZATION OF HISTORICAL DECOMPOSITION (LAST 12 MONTHS)
 # ===================================================
 
 hd_last_12m <- hd_long %>% 
-  filter(Date >= as.Date("2025-07-01") & Date <= as.Date("2026-06-01"))
+  filter(Date >= as.Date("2025-07-01") & Date <= as.Date("2026-09-01"))
 
-p_hd_12m <- ggplot(hd_last_12m, aes(x = Date, y = Contribution, fill = Shock_Type)) +
+ggplot(hd_last_12m, aes(x = Date, y = Contribution, fill = Shock_Type)) +
   geom_col(position = "stack") +
   scale_fill_manual(values = c(
-    "Fundamentals"       = den_color(1),  # gold
-    "External_Sentiment" = den_color(2),  # dark brown
-    "Domestic_Sentiment" = den_color(3)   # red
+    "Fundamentals"       = "orange",   
+    "External_Sentiment" = "orange4",  
+    "Domestic_Sentiment" = "red"       
   )) +
   
   scale_x_date(
-    breaks = seq(as.Date("2025-07-01"), as.Date("2026-06-01"), by = "1 month"),
+    breaks = seq(as.Date("2025-10-01"), as.Date("2026-09-01"), by = "1 month"),
     date_labels = "%b %Y",
-    limits = c(as.Date("2025-06-15"), as.Date("2026-06-15")),
+    limits = c(as.Date("2025-09-15"), as.Date("2026-09-15")),
     expand = c(0, 0)
   ) +
   
   labs(
     title = "Historical Decomposition of the Indonesian Rupiah (xr)",
-    subtitle = "Recent 12-Month Horizon (Juli 2025 - Juni 2026)",
+    subtitle = "Recent 12-Month Horizon (Okt 2025 - Sep 2026)",
     x = "Timeline", y = "Structural Shock Contribution", fill = "Shock Category"
   ) +
-  theme_den(legend_position = "bottom") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-print(p_hd_12m)
-den_save("fig/hd_last_12m.png", p_hd_12m, width = 9, height = 5.5)
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
 
