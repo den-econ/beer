@@ -6,8 +6,8 @@ format: den-paper-pdf
 manuscript: article
 layout: publish
 year: 2026
-volume: 6
-published: "7 July 2026"
+volume: 7                 # Sesuaikan sama nomer WP. harusnya 7
+published: "7 July 2026" # IMED: Ganti
 
 # Authors
 author:
@@ -23,6 +23,9 @@ author:
       - name: "Dewan Ekonomi Nasional"
     email: krisna@dewanekonomi.go.id
     corresponding: false
+  - name: "Muhammad Ismail Sunni"
+    affiliations:
+      - name: "Dewan Ekonomi Nasional"
 
 # Keywords (maximum five)
 keywords:
@@ -284,11 +287,7 @@ $$
 \text{BEER Fair Value}_t = \exp(\widehat{xr}_t)
 $$ {#eq-fair-value-level}
 
-This transformation ensures that the fair value is expressed in the same units as the actual exchange rate, facilitating economic interpretation and policy analysis.
-
-## Diagnostic Testing
-
-Following @ClarkMacDonald1998, we conduct a battery of diagnostic tests to ensure the adequacy of the estimated model. These include:
+This transformation ensures that the fair value is expressed in the same units as the actual exchange rate, facilitating economic interpretation and policy analysis. Moreover, Following @ClarkMacDonald1998, we conduct a battery of diagnostic tests to ensure the adequacy of the estimated model. These include:
 
 ### Multivariate Stationarity Tests
 
